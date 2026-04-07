@@ -7,9 +7,9 @@ BASE_BRANCH="${3:-}"
 LOGDIR="${4:-/tmp/liutaio}"
 
 if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
-  echo "Usage: liutaio <agents-file> <iterations> <base-branch> [log-dir]"
+  echo "Usage: liutaio <agent-file> <iterations> <base-branch> [log-dir]"
   echo ""
-  echo "  agents-file  Path to agents.md relative to repo root"
+  echo "  agent-file   Path to agent.md relative to repo root"
   echo "  iterations   Number of ralph loop iterations"
   echo "  base-branch  Name of the base branch to create from main"
   echo "  log-dir      Log directory (default: /tmp/liutaio)"
@@ -174,7 +174,7 @@ echo ""
 echo "============================================"
 echo "  Liutaio"
 echo "============================================"
-echo "  Agents file : $AGENTS_FILE"
+echo "  Agent file  : $AGENTS_FILE"
 echo "  Iterations  : $ITERATIONS"
 echo "  Base branch : $BASE_BRANCH"
 echo "  Log dir     : $LOGDIR"
@@ -193,9 +193,9 @@ if [ -n "$REAL_REMOTE" ]; then
   echo "  Remote set to: $REAL_REMOTE"
 fi
 
-# Copy agents file (and its directory) from host if not on main
+# Copy agent file (and its directory) from host if not on main
 if [ ! -f "/workspace/$AGENTS_FILE" ] && [ -f "/repo/$AGENTS_FILE" ]; then
-  echo "  Agents file not on main — copying from host repo..."
+  echo "  Agent file not on main — copying from host repo..."
   mkdir -p "/workspace/$AGENTS_DIR"
   cp -r "/repo/$AGENTS_DIR/." "/workspace/$AGENTS_DIR/"
   echo "  Copied: $AGENTS_DIR/"

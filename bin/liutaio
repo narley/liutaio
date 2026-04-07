@@ -17,5 +17,11 @@ if [[ "${1:-}" == "--version" || "${1:-}" == "-v" ]]; then
   exit 0
 fi
 
+# Handle --agent-template
+if [[ "${1:-}" == "--agent-template" ]]; then
+  cat "$LIUTAIO_HOME/agent-template.md"
+  exit 0
+fi
+
 # Delegate to run.sh with all arguments
 exec "$LIUTAIO_HOME/docker/run.sh" "$@"

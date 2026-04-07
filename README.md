@@ -24,12 +24,12 @@ You need three things:
 
 1. **Docker** installed and running
 2. **SSH keys** in `~/.ssh/` that can push to your repo
-3. An **agents.md** file in your repo describing the work to do (see [Writing Your agents.md](#writing-your-agentsmd))
+3. An **agent.md** file in your repo describing the work to do (see [Writing Your agent.md](#writing-your-agentmd))
 
 Then just run:
 
 ```bash
-liutaio agents.md 10 my-feature-branch
+liutaio agent.md 10 my-feature-branch
 ```
 
 That's it. Liutaio figures out authentication, builds the container, clones your repo, installs dependencies, and starts working.
@@ -52,7 +52,7 @@ If you've ever used Claude Code on your machine, you're already set. If not, Liu
 If you don't want to touch your host credentials, or you're on a machine where Claude Code isn't installed, use `--oauth`:
 
 ```bash
-liutaio agents.md 10 my-branch --oauth
+liutaio agent.md 10 my-branch --oauth
 ```
 
 Liutaio will show you a URL to open in your browser. After authorising, you'll see a code on the page — paste it back into the terminal. Your credentials are then cached in a Docker volume, so you only need to do this once.
@@ -60,7 +60,7 @@ Liutaio will show you a URL to open in your browser. After authorising, you'll s
 To re-authenticate later (e.g. switching accounts):
 
 ```bash
-liutaio agents.md 10 my-branch --fresh-login
+liutaio agent.md 10 my-branch --fresh-login
 ```
 
 ### Cached OAuth credentials
@@ -95,9 +95,9 @@ Each iteration works on exactly one ticket. After completing it (code committed,
 
 If the container crashes or you stop it (`docker stop`), it pushes whatever work is on the base branch before shutting down — you never lose progress.
 
-## Writing Your agents.md
+## Writing Your agent.md
 
-The `agents.md` file tells Claude Code what to do. Put it anywhere in your repo (you pass the path as the first argument). Here's a minimal example:
+The `agent.md` file tells Claude Code what to do. Put it anywhere in your repo (you pass the path as the first argument). Here's a minimal example:
 
 ```markdown
 # My Feature
@@ -131,7 +131,7 @@ Maintain a `progress.md` file tracking what's been done.
 When all tickets are complete, output: <promise>COMPLETE</promise>
 ```
 
-See `agents-template.md` for a more complete template.
+See `agent-template.md` for a more complete template.
 
 ### Key conventions
 
@@ -175,20 +175,20 @@ npm install --prefix packages/client
 Pass private tokens with `--env`:
 
 ```bash
-liutaio agents.md 10 my-branch --env MY_NPM_TOKEN=ghp_xxxx
+liutaio agent.md 10 my-branch --env MY_NPM_TOKEN=ghp_xxxx
 ```
 
 ## CLI Reference
 
 ```
-liutaio <agents-file> <iterations> <base-branch> [options]
+liutaio <agent-file> <iterations> <base-branch> [options]
 ```
 
 ### Arguments
 
 | Argument | Description |
 |----------|-------------|
-| `agents-file` | Path to your agents.md relative to repo root |
+| `agent-file` | Path to your agent.md relative to repo root |
 | `iterations` | Maximum number of loop iterations (one ticket per iteration) |
 | `base-branch` | Name of the branch to create from main |
 
@@ -227,7 +227,7 @@ docker logs -f liutaio-my-branch
 docker exec -it liutaio-my-branch bash
 
 # Check progress on your host (updated after each ticket)
-cat path/to/agents-dir/progress.md
+cat path/to/agent-dir/progress.md
 
 # Stop gracefully (pushes work before exiting)
 docker stop liutaio-my-branch
@@ -265,14 +265,14 @@ Check that you're copying the entire code from the callback page (including any 
 Liutaio uses Claude Code's public OAuth client ID to authenticate. If Anthropic rotates this ID in a future update, OAuth login will fail. You can override it by passing the new client ID:
 
 ```bash
-liutaio agents.md 10 my-branch --env LIUTAIO_OAUTH_CLIENT_ID=new-client-id-here
+liutaio agent.md 10 my-branch --env LIUTAIO_OAUTH_CLIENT_ID=new-client-id-here
 ```
 
 You can find the current client ID by running `claude auth login` on your host and inspecting the authorization URL it generates.
 
 ### Loop doesn't stop after all work is done
 
-The loop looks for `<promise>COMPLETE</promise>` in the session output. Make sure your agents.md instructs Claude to output this exact string when finished.
+The loop looks for `<promise>COMPLETE</promise>` in the session output. Make sure your agent.md instructs Claude to output this exact string when finished.
 
 ## License
 

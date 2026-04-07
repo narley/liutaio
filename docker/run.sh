@@ -4,7 +4,7 @@ set -euo pipefail
 # ─── Liutaio — run Claude Code loops with auto-detecting auth ───
 #
 # Usage:
-#   liutaio <agents-file> <iterations> <base-branch> [options]
+#   liutaio <agent-file> <iterations> <base-branch> [options]
 #
 # Authentication (checked in this order):
 #   1. Cached OAuth credentials (Docker volume from a previous --oauth run)
@@ -69,10 +69,10 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "Liutaio — run Claude Code loops with auto-detecting auth"
   echo ""
   echo "Usage:"
-  echo "  liutaio <agents-file> <iterations> <base-branch> [options]"
+  echo "  liutaio <agent-file> <iterations> <base-branch> [options]"
   echo ""
   echo "Arguments:"
-  echo "  agents-file   Path to agents.md relative to repo root"
+  echo "  agent-file    Path to agent.md relative to repo root"
   echo "  iterations    Number of loop iterations"
   echo "  base-branch   Name of the base branch to create from main"
   echo ""
@@ -86,6 +86,8 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  --node-version V  Node.js version (default: 22, or LIUTAIO_NODE_VERSION)"
   echo "  --repo PATH       Path to git repo (default: auto-detect from cwd)"
   echo "  --env KEY=VALUE   Pass env var into the container (repeatable)"
+  echo "  --agent-template  Print the agent.md template to stdout"
+  echo "  --version, -v     Show version number"
   echo ""
   echo "Authentication (checked in this order):"
   echo "  1. Cached OAuth credentials (Docker volume from a previous --oauth run)"
@@ -94,9 +96,9 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  4. Interactive OAuth login (prompts in the terminal)"
   echo ""
   echo "Examples:"
-  echo "  liutaio agents.md 10 my-branch              # auto-detect auth"
-  echo "  liutaio agents.md 10 my-branch --oauth       # force OAuth login"
-  echo "  liutaio agents.md 10 my-branch --fresh-login # re-authenticate"
+  echo "  liutaio agent.md 10 my-branch              # auto-detect auth"
+  echo "  liutaio agent.md 10 my-branch --oauth       # force OAuth login"
+  echo "  liutaio agent.md 10 my-branch --fresh-login # re-authenticate"
   exit 1
 fi
 
@@ -111,9 +113,9 @@ fi
 
 CONTAINER_NAME="${CONTAINER_NAME:-liutaio-${BASE_BRANCH}}"
 
-# ─── Validate agents file exists ─────────────────────────────────────
+# ─── Validate agent file exists ──────────────────────────────────────
 if [ ! -f "$REPO_ROOT/$AGENTS_FILE" ]; then
-  echo "Error: agents file not found: $REPO_ROOT/$AGENTS_FILE"
+  echo "Error: agent file not found: $REPO_ROOT/$AGENTS_FILE"
   exit 1
 fi
 
