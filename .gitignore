@@ -1,0 +1,10 @@
+.env
+.env.*
+.credentials.json
+credentials.json
+*.key
+*.pem
+.DS_Store
+node_modules/
+*.log
+*.tgz
