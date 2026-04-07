@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Resolve the real path of this script (follows symlinks from npm global bin)
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)"
+LIUTAIO_HOME="$(cd "$SCRIPT_PATH/.." && pwd)"
+
+# Delegate to run.sh with all arguments
+exec "$LIUTAIO_HOME/docker/run.sh" "$@"

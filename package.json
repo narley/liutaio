@@ -1,0 +1,32 @@
+{
+  "name": "liutaio",
+  "version": "0.1.0",
+  "description": "Run AI coding agents in Docker containers — autonomously, safely, and with zero setup.",
+  "license": "MIT",
+  "bin": {
+    "liutaio": "./bin/liutaio"
+  },
+  "files": [
+    "bin/",
+    "docker/",
+    "agents-template.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "claude",
+    "docker",
+    "sandbox",
+    "automation",
+    "coding-agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/narleybrittes/liutaio"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
