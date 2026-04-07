@@ -2,7 +2,13 @@
 set -euo pipefail
 
 # Resolve the real path of this script (follows symlinks from npm global bin)
-SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)"
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_PATH="$(cd "$(dirname "$SOURCE")" && pwd)"
 LIUTAIO_HOME="$(cd "$SCRIPT_PATH/.." && pwd)"
 
 # Delegate to run.sh with all arguments
