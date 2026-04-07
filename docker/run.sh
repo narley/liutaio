@@ -50,6 +50,7 @@ while [[ $# -gt 0 ]]; do
     --fresh-login)    FRESH_LOGIN=true; FORCE_OAUTH=true; shift ;;
     --rebuild)        REBUILD=true; shift ;;
     --dry-run)        DRY_RUN=true; shift ;;
+    --help|-h)        AGENTS_FILE=""; ITERATIONS=""; BASE_BRANCH=""; break ;;
     --name)           CONTAINER_NAME="$2"; shift 2 ;;
     --node-version)   NODE_VERSION="$2"; shift 2 ;;
     --repo)           REPO_ROOT="$2"; shift 2 ;;
