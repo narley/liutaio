@@ -43,6 +43,7 @@ EXTRA_ENVS=()
 FORCE_OAUTH=false
 FRESH_LOGIN=false
 SHOW_HELP=false
+CREDS_FILE_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -56,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     --node-version)   NODE_VERSION="$2"; shift 2 ;;
     --repo)           REPO_ROOT="$2"; shift 2 ;;
     --env)            EXTRA_ENVS+=("$2"); shift 2 ;;
+    --creds-file)     CREDS_FILE_OVERRIDE="$2"; shift 2 ;;
     -*)               echo "Unknown option: $1"; exit 1 ;;
     *)
       if [ -z "$AGENTS_FILE" ]; then AGENTS_FILE="$1"
@@ -87,14 +89,17 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  --node-version V  Node.js version (default: 22, or LIUTAIO_NODE_VERSION)"
   echo "  --repo PATH       Path to git repo (default: auto-detect from cwd)"
   echo "  --env KEY=VALUE   Pass env var into the container (repeatable)"
+  echo "  --creds-file PATH Use specific Claude credentials file (overrides auto-detect)"
   echo "  --agent-template  Print the agent.md template to stdout"
   echo "  --version, -v     Show version number"
   echo ""
   echo "Authentication (checked in this order):"
-  echo "  1. Cached OAuth credentials (Docker volume from a previous --oauth run)"
-  echo "  2. Host credentials (macOS Keychain or ~/.claude/.credentials.json)"
-  echo "  3. ANTHROPIC_API_KEY env var"
-  echo "  4. Interactive OAuth login (prompts in the terminal)"
+  echo "  1. --creds-file PATH (explicit override)"
+  echo "  2. macOS Keychain (Claude Code-credentials)"
+  echo "  3. \$CLAUDE_CONFIG_DIR/.credentials.json (default: ~/.claude/.credentials.json)"
+  echo "  4. ANTHROPIC_API_KEY env var"
+  echo "  5. Cached OAuth (Docker volume from a previous --oauth run)"
+  echo "  6. Interactive OAuth login (prompts in the terminal)"
   echo ""
   echo "Examples:"
   echo "  liutaio agent.md 10 my-branch              # auto-detect auth"
@@ -154,6 +159,24 @@ resolve_auth() {
   # --oauth skips host credentials, goes straight to cached OAuth or interactive
   if ! $FORCE_OAUTH; then
 
+    # 0. Explicit --creds-file override (highest priority)
+    if [ -n "$CREDS_FILE_OVERRIDE" ]; then
+      if [ ! -f "$CREDS_FILE_OVERRIDE" ]; then
+        echo "Error: --creds-file not found: $CREDS_FILE_OVERRIDE"
+        exit 1
+      fi
+      CREDS_FILE=$(mktemp "${TMPDIR:-/tmp}/liutaio-creds-XXXXXX")
+      chmod 600 "$CREDS_FILE"
+      cp "$CREDS_FILE_OVERRIDE" "$CREDS_FILE"
+      if jq -e '.claudeAiOauth.accessToken' "$CREDS_FILE" >/dev/null 2>&1; then
+        AUTH_METHOD="creds-file-override"
+        return 0
+      fi
+      echo "Error: --creds-file does not contain a valid OAuth token: $CREDS_FILE_OVERRIDE"
+      rm -f "$CREDS_FILE"
+      exit 1
+    fi
+
     # 1. Host credentials: macOS Keychain
     if [ "$(uname)" = "Darwin" ]; then
       local keychain_data
@@ -171,11 +194,12 @@ resolve_auth() {
       fi
     fi
 
-    # 2. Host credentials: ~/.claude/.credentials.json
-    if [ -f "$HOME/.claude/.credentials.json" ]; then
+    # 2. Host credentials: $CLAUDE_CONFIG_DIR/.credentials.json (default: ~/.claude)
+    CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+    if [ -f "$CLAUDE_DIR/.credentials.json" ]; then
       CREDS_FILE=$(mktemp "${TMPDIR:-/tmp}/liutaio-creds-XXXXXX")
       chmod 600 "$CREDS_FILE"
-      cp "$HOME/.claude/.credentials.json" "$CREDS_FILE"
+      cp "$CLAUDE_DIR/.credentials.json" "$CREDS_FILE"
       if jq -e '.claudeAiOauth.accessToken' "$CREDS_FILE" >/dev/null 2>&1; then
         AUTH_METHOD="credentials-file"
         return 0
@@ -331,8 +355,9 @@ fi
 # ─── Display auth method ────────────────────────────────────────────
 AUTH_DISPLAY=""
 case "$AUTH_METHOD" in
-  keychain)          AUTH_DISPLAY="macOS Keychain" ;;
-  credentials-file)  AUTH_DISPLAY="~/.claude/.credentials.json" ;;
+  keychain)             AUTH_DISPLAY="macOS Keychain" ;;
+  creds-file-override)  AUTH_DISPLAY="$CREDS_FILE_OVERRIDE (--creds-file)" ;;
+  credentials-file)     AUTH_DISPLAY="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json" ;;
   api-key)           AUTH_DISPLAY="ANTHROPIC_API_KEY" ;;
   cached-oauth)      AUTH_DISPLAY="cached OAuth (use --fresh-login to re-auth)" ;;
   interactive-oauth) AUTH_DISPLAY="interactive OAuth (will prompt)" ;;

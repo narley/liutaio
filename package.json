@@ -1,6 +1,6 @@
 {
   "name": "liutaio",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Run AI coding agents in Docker containers — autonomously, safely, and with zero setup.",
   "license": "MIT",
   "bin": {
