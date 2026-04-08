@@ -500,7 +500,7 @@ for ((i=1; i<=$ITERATIONS; i++)); do
 
   if [ -f "$PROGRESS_FILE" ]; then
     # Try "## Next Steps" section first
-    NEXT_TICKET=$(awk '/^## Next Steps/{found=1; next} /^## /{found=0} found && /[^ \t]/{print; exit}' "$PROGRESS_FILE" | sed 's/^[[:space:]-]*//; s/^[Nn]ext [Tt]icket:[[:space:]]*//' || true)
+    NEXT_TICKET=$(awk '/^## Next Steps/{found=1; next} /^## /{found=0} found && /[^ \t]/{print; exit}' "$PROGRESS_FILE" | sed 's/^[[:space:]-]*//; s/^\*\{0,2\}[Nn]ext [Tt]icket\*\{0,2\}:[[:space:]]*//' || true)
 
     # Fallback: first ticket in the table NOT marked DONE
     if [ -z "$NEXT_TICKET" ]; then
