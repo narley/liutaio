@@ -42,6 +42,7 @@ REPO_ROOT=""
 EXTRA_ENVS=()
 FORCE_OAUTH=false
 FRESH_LOGIN=false
+SHOW_HELP=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -50,7 +51,7 @@ while [[ $# -gt 0 ]]; do
     --fresh-login)    FRESH_LOGIN=true; FORCE_OAUTH=true; shift ;;
     --rebuild)        REBUILD=true; shift ;;
     --dry-run)        DRY_RUN=true; shift ;;
-    --help|-h)        AGENTS_FILE=""; ITERATIONS=""; BASE_BRANCH=""; break ;;
+    --help|-h)        AGENTS_FILE=""; ITERATIONS=""; BASE_BRANCH=""; SHOW_HELP=true; break ;;
     --name)           CONTAINER_NAME="$2"; shift 2 ;;
     --node-version)   NODE_VERSION="$2"; shift 2 ;;
     --repo)           REPO_ROOT="$2"; shift 2 ;;
@@ -99,7 +100,7 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  liutaio agent.md 10 my-branch              # auto-detect auth"
   echo "  liutaio agent.md 10 my-branch --oauth       # force OAuth login"
   echo "  liutaio agent.md 10 my-branch --fresh-login # re-authenticate"
-  exit 1
+  if $SHOW_HELP; then exit 0; else exit 1; fi
 fi
 
 # ─── Detect repo root ───────────────────────────────────────────────
