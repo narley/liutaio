@@ -208,10 +208,15 @@ if [ ! -f "/workspace/liutaio.setup.sh" ] && [ -f "/repo/liutaio.setup.sh" ]; th
   echo "  Copied: liutaio.setup.sh"
 fi
 
-# ─── Checkout main and create base branch ────────────────────────────
-echo "[2/7] Creating base branch '$BASE_BRANCH' from main..."
-git checkout main --quiet
-git checkout -b "$BASE_BRANCH" --quiet
+# ─── Checkout main and create/reuse base branch ─────────────────────
+if [ "${LIUTAIO_REUSE_BRANCH:-}" = "true" ]; then
+  echo "[2/7] Reusing existing branch '$BASE_BRANCH'..."
+  git checkout "$BASE_BRANCH" --quiet
+else
+  echo "[2/7] Creating base branch '$BASE_BRANCH' from main..."
+  git checkout main --quiet
+  git checkout -b "$BASE_BRANCH" --quiet
+fi
 
 # ─── Git config ──────────────────────────────────────────────────────
 git config user.name "${GIT_USER_NAME:-Liutaio Agent}"

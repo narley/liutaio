@@ -119,6 +119,20 @@ fi
 
 CONTAINER_NAME="${CONTAINER_NAME:-liutaio-${BASE_BRANCH}}"
 
+# ─── Check if branch already exists ──────────────────────────────────
+REUSE_BRANCH=false
+if git -C "$REPO_ROOT" rev-parse --verify "$BASE_BRANCH" &>/dev/null; then
+  echo "Branch '$BASE_BRANCH' already exists."
+  printf "Do you want to reuse it and continue from where it left off? [y/N] "
+  read -r REPLY
+  if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+    REUSE_BRANCH=true
+  else
+    echo "Aborted."
+    exit 0
+  fi
+fi
+
 # ─── Validate agent file exists ──────────────────────────────────────
 if [ ! -f "$REPO_ROOT/$AGENTS_FILE" ]; then
   echo "Error: agent file not found: $REPO_ROOT/$AGENTS_FILE"
@@ -281,6 +295,11 @@ DOCKER_CMD=(
 
 # Tell the entrypoint which auth method is in use (controls token refresh behaviour)
 DOCKER_CMD+=(-e "LIUTAIO_AUTH_METHOD=$AUTH_METHOD")
+
+# Tell the entrypoint to reuse an existing branch instead of creating a new one
+if $REUSE_BRANCH; then
+  DOCKER_CMD+=(-e "LIUTAIO_REUSE_BRANCH=true")
+fi
 
 # Credentials: mount host file (read-only) OR Docker volume (read-write for OAuth caching)
 if [ -n "$CREDS_FILE" ]; then
