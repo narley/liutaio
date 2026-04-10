@@ -139,14 +139,25 @@ Before writing any code for a ticket:
 
 ---
 
-## Completion
+## Per-Ticket Completion
+
+After finishing one ticket:
 
 1. When all code changes are committed on the feature branch, run verification.
 2. If verification passes, merge into the base branch.
 3. Run verification on the base branch.
 4. Update `progress.md` with a summary of the work done.
-5. **STOP here. Do not start the next ticket.** The next iteration of the loop will pick it up.
+5. **STOP. End the session. Do not start the next ticket.** The next iteration of the loop will pick it up.
+6. Do NOT output `<promise>COMPLETE</promise>` — that token is reserved for when ALL tickets are done (see below).
 
-- When ALL tickets are complete and verified, output exactly:
+---
+
+## Final Completion (all tickets done)
+
+Only output the completion token when **every ticket in the Execution Order** has been completed, merged, and verified. Not after one ticket — after ALL of them.
+
+Check `progress.md`: if any ticket is not marked done, do NOT output this token.
+
+When — and only when — all tickets are done:
 
   <promise>COMPLETE</promise>
