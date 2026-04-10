@@ -500,12 +500,19 @@ for ((i=1; i<=$ITERATIONS; i++)); do
 
   # Show which ticket is next
   NEXT_TICKET=""
+  NEXT_ID=""
+  TICKET_FILE=""
   PROGRESS_FILE="/workspace/$AGENTS_DIR/progress.md"
   TICKETS_DIR="/workspace/$AGENTS_DIR/tickets"
 
   if [ -f "$PROGRESS_FILE" ]; then
     # Try "## Next Steps" section first
     NEXT_TICKET=$(awk '/^## Next Steps/{found=1; next} /^## /{found=0} found && /[^ \t]/{print; exit}' "$PROGRESS_FILE" | sed 's/^[[:space:]-]*//; s/^\*\{0,2\}[Nn]ext [Tt]icket\*\{0,2\}:[[:space:]]*//' || true)
+
+    # Extract NEXT_ID from NEXT_TICKET if it starts with a ticket identifier
+    if [ -n "$NEXT_TICKET" ]; then
+      NEXT_ID=$(echo "$NEXT_TICKET" | grep -oE '^ticket-[0-9]+' || true)
+    fi
 
     # Fallback: first ticket in the table NOT marked DONE
     if [ -z "$NEXT_TICKET" ]; then
@@ -522,6 +529,11 @@ for ((i=1; i<=$ITERATIONS; i++)); do
         NEXT_TICKET="$NEXT_ID"
       fi
     fi
+
+    # Resolve TICKET_FILE whenever NEXT_ID is set (not already resolved in fallback)
+    if [ -n "$NEXT_ID" ] && [ -z "$TICKET_FILE" ] && [ -d "$TICKETS_DIR" ]; then
+      TICKET_FILE=$(ls "$TICKETS_DIR"/${NEXT_ID}* 2>/dev/null | head -1)
+    fi
   fi
 
   if [ -n "$NEXT_TICKET" ]; then
@@ -529,8 +541,17 @@ for ((i=1; i<=$ITERATIONS; i++)); do
     echo "============================================"
   fi
 
+  TICKET_ASSIGNMENT=""
+  if [ -n "$NEXT_ID" ]; then
+    TICKET_ASSIGNMENT="YOUR ASSIGNED TICKET: ${NEXT_ID}. Description: ${NEXT_TICKET:-see progress.md}."
+    if [ -n "$TICKET_FILE" ]; then
+      TICKET_ASSIGNMENT="${TICKET_ASSIGNMENT} Ticket file: ${TICKET_FILE}."
+    fi
+    TICKET_ASSIGNMENT="${TICKET_ASSIGNMENT} Work ONLY on this ticket. All other tickets are out of scope for this session."
+  fi
+
   claude --dangerously-skip-permissions --output-format stream-json --verbose \
-    -p "You are running in AFK (unattended) mode inside a Docker container (Liutaio). Follow the instructions in @${AGENTS_FILE}. IMPORTANT: Since no human is present, whenever a step says to ask the human for confirmation (e.g. merge confirmation, manual steps), auto-approve and proceed automatically. Answer 'yes' to your own merge prompts. For human-assisted tickets that require manual operations, skip them, note it in progress.md, and continue to the next ticket. IMPORTANT: Do NOT commit progress.md — it is tracked outside of git. IMPORTANT: Work on exactly ONE ticket per session. After completing one ticket (code committed, progress.md updated, branch merged and verified), STOP. Do not start the next ticket — the next iteration will handle it." \
+    -p "You are running in AFK (unattended) mode inside a Docker container (Liutaio). Follow the instructions in @${AGENTS_FILE}. IMPORTANT: Since no human is present, whenever a step says to ask the human for confirmation (e.g. merge confirmation, manual steps), auto-approve and proceed automatically. Answer 'yes' to your own merge prompts. For human-assisted tickets that require manual operations, skip them, note it in progress.md, and continue to the next ticket. IMPORTANT: Do NOT commit progress.md — it is tracked outside of git. IMPORTANT: Work on exactly ONE ticket per session. After completing one ticket (code committed, progress.md updated, branch merged and verified), STOP. Do not start the next ticket — the next iteration will handle it.${TICKET_ASSIGNMENT:+ ${TICKET_ASSIGNMENT}}" \
     2>"$LOGFILE.stderr" \
     | grep --line-buffered '^{' \
     | tee "$LOGFILE" \
