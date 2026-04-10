@@ -59,7 +59,7 @@ Before writing any code for a ticket:
 ## Human-Assisted Tickets
 
 - Some tickets may require manual operations that cannot be automated.
-- When encountering these, skip the ticket, note it in progress.md, and continue to the next ticket.
+- When encountering these, mark the ticket as BLOCKED in progress.md with a reason, and STOP the session. Do not continue to another ticket.
 
 ---
 
