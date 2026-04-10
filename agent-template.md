@@ -95,6 +95,7 @@ Before writing any code for a ticket:
 6. If stuck after 3 attempts, stop and say:
    "Blocked on [ticket]. Issue: [description]. Awaiting human input."
 
+- If the ticket is BLOCKED due to requiring human/manual action, do NOT emit `<ticket-done>`. The absence of this token signals to the loop that the ticket was not completed.
 - Prefer running the smallest applicable verification first
   (e.g. single-file test before full test suite).
 - Never skip a failing test to proceed.
@@ -147,8 +148,11 @@ After finishing one ticket:
 2. If verification passes, merge into the base branch.
 3. Run verification on the base branch.
 4. Update `progress.md` with a summary of the work done.
-5. **STOP. End the session. Do not start the next ticket.** The next iteration of the loop will pick it up.
-6. Do NOT output `<promise>COMPLETE</promise>` — that token is reserved for when ALL tickets are done (see below).
+5. Emit the ticket completion signal with the ticket ID you worked on:
+
+   <ticket-done id="TICKET-ID" />
+
+6. **STOP here. Do not start the next ticket.** The next iteration of the loop will pick it up.
 
 ---
 
