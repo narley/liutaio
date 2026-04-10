@@ -557,8 +557,8 @@ for ((i=1; i<=$ITERATIONS; i++)); do
     cp "/workspace/$AGENTS_DIR/progress.md" /output/progress.md 2>/dev/null || true
   fi
 
-  # Check for completion token
-  if grep -q '<promise>.*COMPLETE.*</promise>' "$LOGFILE"; then
+  # Check for completion token (only in assistant text, not tool results)
+  if jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text // empty' "$LOGFILE" 2>/dev/null | grep -q '<promise>.*COMPLETE.*</promise>'; then
     echo ""
     echo "All tickets complete after $i iterations. Total time: $(elapsed)"
     exit 0
