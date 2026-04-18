@@ -27,7 +27,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 IMAGE_NAME="liutaio"
-CREDS_VOLUME="liutaio-creds"
+DEFAULT_CREDS_VOLUME="liutaio-creds"
 
 # ─── Parse arguments ─────────────────────────────────────────────────
 AGENTS_FILE=""
@@ -44,6 +44,7 @@ FORCE_OAUTH=false
 FRESH_LOGIN=false
 SHOW_HELP=false
 CREDS_FILE_OVERRIDE=""
+CREDS_VOLUME=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -58,6 +59,7 @@ while [[ $# -gt 0 ]]; do
     --repo)           REPO_ROOT="$2"; shift 2 ;;
     --env)            EXTRA_ENVS+=("$2"); shift 2 ;;
     --creds-file)     CREDS_FILE_OVERRIDE="$2"; shift 2 ;;
+    --creds-volume)   CREDS_VOLUME="$2"; shift 2 ;;
     -*)               echo "Unknown option: $1"; exit 1 ;;
     *)
       if [ -z "$AGENTS_FILE" ]; then AGENTS_FILE="$1"
@@ -90,6 +92,7 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  --repo PATH       Path to git repo (default: auto-detect from cwd)"
   echo "  --env KEY=VALUE   Pass env var into the container (repeatable)"
   echo "  --creds-file PATH Use specific Claude credentials file (overrides auto-detect)"
+  echo "  --creds-volume N  Docker volume for cached OAuth creds (default: liutaio-creds)"
   echo "  --agent-template  Print the agent.md template to stdout"
   echo "  --version, -v     Show version number"
   echo ""
@@ -105,6 +108,10 @@ if [ -z "$AGENTS_FILE" ] || [ -z "$ITERATIONS" ] || [ -z "$BASE_BRANCH" ]; then
   echo "  liutaio agent.md 10 my-branch              # auto-detect auth"
   echo "  liutaio agent.md 10 my-branch --oauth       # force OAuth login"
   echo "  liutaio agent.md 10 my-branch --fresh-login # re-authenticate"
+  echo ""
+  echo "  # Run two parallel sessions without OAuth refresh token conflicts:"
+  echo "  liutaio agent.md 10 branch-a --oauth --creds-volume liutaio-creds-a"
+  echo "  liutaio agent.md 10 branch-b --oauth --creds-volume liutaio-creds-b"
   if $SHOW_HELP; then exit 0; else exit 1; fi
 fi
 
@@ -118,6 +125,7 @@ if [ -z "$REPO_ROOT" ]; then
 fi
 
 CONTAINER_NAME="${CONTAINER_NAME:-liutaio-${BASE_BRANCH}}"
+CREDS_VOLUME="${CREDS_VOLUME:-$DEFAULT_CREDS_VOLUME}"
 
 # ─── Check if branch already exists ──────────────────────────────────
 REUSE_BRANCH=false
@@ -378,7 +386,7 @@ case "$AUTH_METHOD" in
   creds-file-override)  AUTH_DISPLAY="$CREDS_FILE_OVERRIDE (--creds-file)" ;;
   credentials-file)     AUTH_DISPLAY="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json" ;;
   api-key)           AUTH_DISPLAY="ANTHROPIC_API_KEY" ;;
-  cached-oauth)      AUTH_DISPLAY="cached OAuth (use --fresh-login to re-auth)" ;;
+  cached-oauth)      AUTH_DISPLAY="cached OAuth in $CREDS_VOLUME (use --fresh-login to re-auth)" ;;
   interactive-oauth) AUTH_DISPLAY="interactive OAuth (will prompt)" ;;
 esac
 
