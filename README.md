@@ -40,8 +40,9 @@ Liutaio tries to authenticate automatically — you don't need to configure anyt
 
 | Method | How to set it up |
 |--------|-----------------|
+| **`--creds-file PATH`** | Explicit override pointing at a credentials JSON file. |
 | **macOS Keychain** | Run `claude auth login` on your Mac once. Liutaio picks it up. |
-| **Credentials file** | Have `~/.claude/.credentials.json` on your machine (common on Linux/CI). |
+| **Credentials file** | Have `~/.claude/.credentials.json` on your machine (common on Linux/CI). Override the directory with `CLAUDE_CONFIG_DIR`. |
 | **API key** | Set `export ANTHROPIC_API_KEY=sk-ant-...` in your shell. |
 | **Interactive OAuth** | No setup needed! Liutaio shows a URL, you open it, paste the code back. |
 
@@ -205,17 +206,36 @@ liutaio <agent-file> <iterations> <base-branch> [options]
 | `--node-version V` | Node.js version (default: 22) |
 | `--repo PATH` | Path to git repo (default: auto-detect from current directory) |
 | `--env KEY=VALUE` | Pass environment variable into the container (repeatable) |
+| `--creds-file PATH` | Use a specific Claude credentials file (overrides auto-detect) |
+| `--creds-volume NAME` | Docker volume for cached OAuth credentials (default: `liutaio-creds`) |
+| `--agent-template` | Print the `agent.md` template to stdout |
+| `--version`, `-v` | Show version number |
+| `--help`, `-h` | Show help |
 
 ### Environment variables
 
 | Variable | Description |
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | API key for authentication (alternative to OAuth) |
+| `CLAUDE_CONFIG_DIR` | Override default `~/.claude` directory for credentials lookup |
 | `LIUTAIO_NODE_VERSION` | Default Node.js version (overridden by `--node-version`) |
 | `LIUTAIO_SSH_HOSTS` | Comma-separated SSH hosts for known_hosts (e.g. `gitlab.com,github.com`) |
 | `LIUTAIO_OAUTH_CLIENT_ID` | Override Claude Code's OAuth client ID (only if Anthropic rotates it) |
 | `GIT_USER_NAME` | Git committer name (default: your host's git config) |
 | `GIT_USER_EMAIL` | Git committer email (default: your host's git config) |
+
+### Running multiple sessions in parallel
+
+If you want to run two liutaio sessions at the same time on the same Claude account, do NOT let them share credentials — OAuth tokens rotate on every refresh, so one session will invalidate the other and you'll see `401 Invalid authentication credentials`.
+
+Give each session its own OAuth volume:
+
+```bash
+liutaio agent.md 30 branch-a --oauth --creds-volume liutaio-creds-a
+liutaio agent.md 30 branch-b --oauth --creds-volume liutaio-creds-b
+```
+
+Each volume caches its own OAuth token independently. The first run of each will prompt for login.
 
 ## Monitoring a Run
 
